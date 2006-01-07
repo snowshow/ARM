@@ -22,7 +22,7 @@
 #include "rephandler.h"
 #include "server.h"
 
-#define DYNAMIC
+//#define DYNAMIC
 
 #ifdef DYNAMIC
 #define BUF_SIZE 1024

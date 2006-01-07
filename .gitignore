@@ -2,4 +2,6 @@
 *.log
 *.pid
 *.swp
+*.bin
+*.raw
 Repeater/repeater

@@ -67,8 +67,11 @@ int run_repeater_on(int listening_socket)
 			if (FD_ISSET(sockets[i], &fdset)) {
 				int nbyte;
 				if ((nbyte = read(sockets[i], buffer, BUF_SIZE-1)) < 0) {
-					if (errno != EAGAIN && errno != EWOULDBLOCK)
+					if (errno != EAGAIN && errno != EWOULDBLOCK && errno != ECONNRESET)
 						lerror(LOG_WARNING, "read");
+					lprintf(LOG_INFO, "Socket %i closed", i);
+					close(sockets[i]);
+					sockets[i] = sockets[--socketc];
 				} else if (nbyte == 0) {
 					lprintf(LOG_INFO, "Socket %i closed", i);
 					close(sockets[i]);
@@ -76,11 +79,15 @@ int run_repeater_on(int listening_socket)
 				} else {
 					for (int j = 0; j < socketc ; j++) {
 						if (i != j) {
-							fcntl(socket, F_SETFL, fcntl(listening_socket, F_GETFL) | O_NONBLOCK);
-							if (send(sockets[j], buffer, nbyte, 0) < 0) {
-								lerror(LOG_WARNING, "send");
+							if (fcntl(socket, F_SETFL, fcntl(listening_socket, F_GETFL) & ~O_NONBLOCK) < 0) {
+								lerror(LOG_WARNING, "fcntl");
 							}
-							fcntl(socket, F_SETFL, fcntl(listening_socket, F_GETFL) & ~O_NONBLOCK);
+							if (write(sockets[j], buffer, nbyte) < 0) {
+								lerror(LOG_WARNING, "write");
+							}
+							if (fcntl(socket, F_SETFL, fcntl(listening_socket, F_GETFL) | O_NONBLOCK) < 0) {
+								lerror(LOG_WARNING, "fcntl");
+							}
 						}
 					}
 				}

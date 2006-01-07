@@ -1,21 +1,19 @@
-EXEC = main
-
 CC = gcc
 LD = gcc
 
 CFLAGS = -std=gnu99 -Iinclude
-LDFLAGS = 
-#-lrt
+LDFLAGS = -lrt
 DEBUG = -g
 WARNING = -Wall -pedantic
 OPTIMIZE = -O3
 
-SRC = $(wildcard src/*.c)
+SRC = $(wildcard *.c)
 OBJ = $(SRC:.c=.o)
+EXEC = $(SRC:.c=.bin)
 
 all: $(EXEC)
 
-$(EXEC): $(OBJ)
+%.bin: %.o
 	$(LD) $(DEBUG) $(WARNING) $(LDFLAGS) -o $@ $^
 
 %.o: %.c
@@ -27,5 +25,7 @@ clean:
 mrproper: clean
 	rm -f $(EXEC)
 	rm -f gmon.out
+
+rebuild: mrproper all
 
 .PHONY: clean mrproper
