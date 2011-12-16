@@ -1,5 +1,6 @@
 
 int handler_init();
+void lservice(char* service);
 int handler_end(int keep_alive);
 
 int repeater_count();
@@ -12,5 +13,3 @@ int repeater_rm_by_service(char* service, int send_kill_signal);
 int repeater_rm_by_pid(int pid, int send_kill_signal);
 int repeater_rm_by_id(int id, int send_kill_signal);
 void repeater_rm_all();
-
-char* repeater_pidtoservice(int pid);

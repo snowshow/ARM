@@ -7,9 +7,11 @@
 #include <unistd.h> // getpid()
 
 #include "log.h"
+#include "handler.h"
 
 FILE* logfile;
 char buffer[256];
+char service[256];
 
 int loginit(char* lgf)
 {
@@ -18,7 +20,13 @@ int loginit(char* lgf)
 	if (logfile == NULL) {
 		return -1;
 	}
+	sprintf(service, "main");
 	return 0;
+}
+
+void lservice(char* serv)
+{
+	sprintf(service, serv);
 }
 
 void lerror(int log, char* error)
@@ -35,26 +43,26 @@ void lprintf(int log, const char *format, ...)
 	if (logfile == NULL)
 		return;
 	
-	fprintf(logfile, "(%d) ", getpid());
-	
 	time(&t);
 	date = localtime(&t);
-	fprintf(logfile, "[%d/%d %d:%d:%d] ",
+	fprintf(logfile, "[%d/%d %d:%d:%d] \t",
 			date->tm_mday, date->tm_mon,
 			date->tm_hour, date->tm_min, date->tm_sec);
 	
+	fprintf(logfile, "[%s] \t", service);
+	
 	switch (log) {
 		case LOG_INFO:
-			fprintf(logfile, "INFO");
+			fprintf(logfile, "INFO \t");
 			break;
 		case LOG_NOTICE:
-			fprintf(logfile, "NOTICE");
+			fprintf(logfile, "NOTICE \t");
 			break;
 		case LOG_WARNING:
-			fprintf(logfile, "WARNING");
+			fprintf(logfile, "WARNING \t");
 			break;
 		case LOG_ERR:
-			fprintf(logfile, "ERROR");
+			fprintf(logfile, "ERROR \t");
 			break;
 	}
 	fprintf(logfile, "\t");

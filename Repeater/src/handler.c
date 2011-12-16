@@ -66,6 +66,7 @@ int add_repeater(char* service)
 			close(socket);
 			return -1;
 		case 0: // Son
+			lservice(service);
 			lprintf(LOG_INFO, "Service %s launched", service);
 			if(run_repeater_on(socket) < 0) {
 				lprintf(LOG_ERR, "lisen_connection failed");
@@ -75,10 +76,9 @@ int add_repeater(char* service)
 			exit(EXIT_SUCCESS);
 		default: // Father
 			close(socket);
-			lprintf(LOG_INFO, "Add service { %i, %s } to database (entry %i)", pid, service, repeaterc);
 			struct repeater* rep = malloc(sizeof(struct repeater));
 			rep->pid = pid;
-			rep->service = malloc(strlen(service) * sizeof(char) + 1);
+			rep->service = malloc((strlen(service)+1) * sizeof(char));
 			strcpy(rep->service, service);
 			repeaters[repeaterc++] = rep;
 	}
@@ -94,26 +94,45 @@ int repeater_rm_by_service(char* service, int send_kill_signal)
 	return -1;
 }
 
-/** Del a repeater server from database
+/** Remove a repeater server from database
+ * @param pid Repeater pid
  * @param send_kill_signal Kill repeater or only remove it from database
+ * @return 0 on success, -1 on failure
  */
 int repeater_rm_by_pid(int pid, int send_kill_signal)
 {
-	for (int id = 0 ; id < repeaterc ; id++)
-		if (repeaters[id]->pid == pid) {
-			return repeater_rm_by_id(id, send_kill_signal);
-		}	
+	int id;
+	
+	for (id = 0 ; id < repeaterc ; id++) {
+		lprintf(LOG_INFO, "%i ?= %i", repeaters[id]->pid, pid);
+		//if (repeaters[id]->pid == pid) {
+			//lprintf(LOG_INFO, "repeater_rm_by_pid(): rm repeaters %i (pid=%s)", id, pid);
+			//return repeater_rm_by_id(id, send_kill_signal);
+			//return 0;
+		//}
+		//lprintf(LOG_INFO, "repeater_rm_by_pid(): no");
+	}
+	lprintf(LOG_INFO, "repeater_rm_by_pid(): illegal argument (pid=%s)", pid);
+	
 	return -1;
 }
 
+
+/** Remove a repeater server from database
+ * @param id Repeater id
+ * @param send_kill_signal Kill repeater or only remove it from database
+ * @return 0 on success, -1 on failure
+ */
 int repeater_rm_by_id(int id, int send_kill_signal)
 {
+	lprintf(LOG_INFO, "repeater_rm_by_id(): rm id=%i", id);
 	sigset_t allsigmask, backupsigmask;
 	
 	if (id >= repeaterc || id < 0) {
 		lprintf(LOG_INFO, "repeater_rm_by_id(): illegal argument (id=%s)", id);
 		return -1;
 	}
+
 	
 	sigemptyset(&allsigmask);
 	sigaddset(&allsigmask, SIGCHLD);
@@ -130,6 +149,7 @@ int repeater_rm_by_id(int id, int send_kill_signal)
 	raise(SIGUSR1);
 	
 	sigprocmask(SIG_SETMASK, &backupsigmask, NULL);
+	
 	return 0;
 }
 
@@ -137,12 +157,5 @@ void repeater_rm_all()
 {
 	while (repeaterc > 0)
 		repeater_rm_by_id(repeaterc-1, 1);
-}
-
-char* repeater_pidtoservice(int pid)
-{
-	for (int i = 0 ; i < repeaterc ; i++)
-		if (repeaters[i]->pid == pid)
-			return repeaters[i]->service;
-	return NULL;
+	raise(SIGUSR1);
 }
