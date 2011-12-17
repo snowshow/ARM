@@ -44,7 +44,7 @@ int create_socket_stream(const char* hostname, const char* servname)
 
 	s = getaddrinfo(hostname, servname, &hints, &result);
 	if (s != 0) {
-		lprintf(LOG_NOTICE, "Error: %s\n", gai_strerror(s));
+		lprintf(LOG_NOTICE, "Error: %s", gai_strerror(s));
 		return -1;
 	}
 
@@ -60,8 +60,8 @@ int create_socket_stream(const char* hostname, const char* servname)
 		if (bind(sfd, rp->ai_addr, rp->ai_addrlen) == 0) {
 			break;	/* Success */
 		} else {
-			lerror(LOG_INFO, "bind");
-			lprintf(LOG_INFO, "Tried address : %s\n", inet_ntoa(((const struct sockaddr_in*)(rp->ai_addr))->sin_addr));
+			lerror(LOG_NOTICE, "bind");
+			lprintf(LOG_NOTICE, "Tried address: %s, service: ", inet_ntoa(((const struct sockaddr_in*)(rp->ai_addr))->sin_addr), servname);
 		}
 
 		close(sfd);
@@ -69,7 +69,7 @@ int create_socket_stream(const char* hostname, const char* servname)
 	freeaddrinfo(result);	/* No longer needed */
 
 	if (rp == NULL) {	/* No address succeeded */
-		lprintf(LOG_NOTICE, "Error: Could not bind\n");
+		lprintf(LOG_NOTICE, "Error: Could not bind");
 		return -1;
 	}
 

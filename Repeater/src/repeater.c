@@ -37,7 +37,7 @@ int run_repeater_on(int listening_socket)
 	fcntl(listening_socket, F_SETFL, fcntl(listening_socket, F_GETFL) | O_NONBLOCK);
 	
 	run = 1;
-	
+
 	fd_set fdset;
 	while (run) { // Control ?
 		FD_ZERO(&fdset);

@@ -7,7 +7,7 @@
 #include <unistd.h> // getpid()
 
 #include "log.h"
-#include "handler.h"
+#include "rephandler.h"
 
 FILE* logfile;
 char buffer[256];
@@ -20,7 +20,7 @@ int loginit(char* lgf)
 	if (logfile == NULL) {
 		return -1;
 	}
-	sprintf(service, "main");
+	sprintf(service, "handler");
 	return 0;
 }
 

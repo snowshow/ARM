@@ -4,7 +4,7 @@ PRG_NAME="Eurobot repeater"
 LOGFILE=$PWD/../var/repeater.log
 PIDFILE=$PWD/../var/repeater.pid
 PID=$(cat $PIDFILE 2> /dev/null)
-CMD=gdb ../repeater
+CMD=../repeater
 
 USECOLOR=yes
 . functions
@@ -13,8 +13,7 @@ case "$1" in
 	start)
 		stat_busy "Start $PRG_NAME"
 		if [ -z "$PID" ]; then
-			echo "$CMD -p $PIDFILE -l $LOGFILE"
-			$CMD -p $PIDFILE -l $LOGFILE
+			$CMD -p $PIDFILE -l $LOGFILE $2 $3
 			if [ $? -eq 0 ]; then
 				stat_done
 			else
@@ -27,7 +26,7 @@ case "$1" in
 				stat_fail
 				exit 1
 			else	
-				$CMD -p $PIDFILE -l $LOGFILE
+				$CMD -p $PIDFILE -l $LOGFILE $2 $3
 				if [ $? -eq 0 ]; then
 					stat_done
 				else

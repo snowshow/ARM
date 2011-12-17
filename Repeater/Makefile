@@ -27,4 +27,6 @@ mrproper: clean
 	rm -f $(EXEC)
 	rm -f gmon.out
 
+rebuild: mrproper all
+
 .PHONY: clean mrproper

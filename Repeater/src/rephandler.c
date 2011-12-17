@@ -6,7 +6,7 @@
 #include <string.h> // strcmp()
 #include <unistd.h> // fork()
 
-#include "handler.h"
+#include "rephandler.h"
 #include "log.h"
 #include "server.h"
 #include "repeater.h"
@@ -43,7 +43,7 @@ int handler_end(int keep_alive)
 void lprintf_repeater_list()
 {
 	for (int i = 0 ; i < repeaterc ; i++) {
-		lprintf(LOG_INFO, "Repeater %i : { pid=%i, service=%s }", i, repeaters[i]->pid, repeaters[i]->service);
+		lprintf(LOG_INFO, "Repeater %i : { service=%s, pid=%i  }", i, repeaters[i]->service, repeaters[i]->pid);
 	}
 }
 
@@ -56,7 +56,7 @@ int add_repeater(char* service)
 {
 	int socket;
 	if ((socket = create_tcp_server(NULL, service)) < 0) {
-		lprintf(LOG_NOTICE, "create_repeater::create_tcp_server(%s) failed", service);
+		lprintf(LOG_NOTICE, "Failed to start service %s", service);
 		return -1;
 	}
 	int pid = fork();
@@ -67,12 +67,12 @@ int add_repeater(char* service)
 			return -1;
 		case 0: // Son
 			lservice(service);
-			lprintf(LOG_INFO, "Service %s launched", service);
+			lprintf(LOG_INFO, "Service %s started", service);
 			if(run_repeater_on(socket) < 0) {
 				lprintf(LOG_ERR, "lisen_connection failed");
 				exit(EXIT_FAILURE);
 			}
-			close(socket);
+			lprintf(LOG_INFO, "Service %s stoped", service);
 			exit(EXIT_SUCCESS);
 		default: // Father
 			close(socket);
@@ -85,34 +85,33 @@ int add_repeater(char* service)
 	return 0;
 }
 
-int repeater_rm_by_service(char* service, int send_kill_signal)
+/** Remove a repeater server from database
+ * @param service Repeater servie
+ * @return 0 on success, -1 on failure
+ */
+int repeater_rm_by_service(char* service)
 {
 	for (int id = 0 ; id < repeaterc ; id++)
 		if (strcmp(repeaters[id]->service, service) == 0) {
-			return repeater_rm_by_id(id, send_kill_signal);
+			return repeater_rm_by_id(id);
 		}	
 	return -1;
 }
 
 /** Remove a repeater server from database
  * @param pid Repeater pid
- * @param send_kill_signal Kill repeater or only remove it from database
  * @return 0 on success, -1 on failure
  */
-int repeater_rm_by_pid(int pid, int send_kill_signal)
+int repeater_rm_by_pid(int pid)
 {
 	int id;
 	
 	for (id = 0 ; id < repeaterc ; id++) {
-		lprintf(LOG_INFO, "%i ?= %i", repeaters[id]->pid, pid);
-		//if (repeaters[id]->pid == pid) {
-			//lprintf(LOG_INFO, "repeater_rm_by_pid(): rm repeaters %i (pid=%s)", id, pid);
-			//return repeater_rm_by_id(id, send_kill_signal);
-			//return 0;
-		//}
-		//lprintf(LOG_INFO, "repeater_rm_by_pid(): no");
+		if (repeaters[id]->pid == pid) {
+			return repeater_rm_by_id(id);
+		}
 	}
-	lprintf(LOG_INFO, "repeater_rm_by_pid(): illegal argument (pid=%s)", pid);
+	lprintf(LOG_INFO, "repeater_rm_by_pid(): illegal argument (pid=%d)", pid);
 	
 	return -1;
 }
@@ -120,12 +119,10 @@ int repeater_rm_by_pid(int pid, int send_kill_signal)
 
 /** Remove a repeater server from database
  * @param id Repeater id
- * @param send_kill_signal Kill repeater or only remove it from database
  * @return 0 on success, -1 on failure
  */
-int repeater_rm_by_id(int id, int send_kill_signal)
+int repeater_rm_by_id(int id)
 {
-	lprintf(LOG_INFO, "repeater_rm_by_id(): rm id=%i", id);
 	sigset_t allsigmask, backupsigmask;
 	
 	if (id >= repeaterc || id < 0) {
@@ -133,20 +130,15 @@ int repeater_rm_by_id(int id, int send_kill_signal)
 		return -1;
 	}
 
-	
 	sigemptyset(&allsigmask);
 	sigaddset(&allsigmask, SIGCHLD);
 	sigaddset(&allsigmask, SIGCLD);
 	sigprocmask(SIG_BLOCK, &allsigmask, &backupsigmask);
 	
-	if (send_kill_signal)
-		kill(repeaters[id]->pid, SIGQUIT);
-	
-	lprintf(LOG_INFO, "Service %s aborded (pid:%i)", repeaters[id]->service, repeaters[id]->pid);
+	//lprintf(LOG_INFO, "Service %s shutdown", repeaters[id]->service, repeaters[id]->pid);
 	free(repeaters[id]->service);
 	free(repeaters[id]);
 	repeaters[id] = repeaters[--repeaterc];
-	raise(SIGUSR1);
 	
 	sigprocmask(SIG_SETMASK, &backupsigmask, NULL);
 	
@@ -155,7 +147,10 @@ int repeater_rm_by_id(int id, int send_kill_signal)
 
 void repeater_rm_all()
 {
-	while (repeaterc > 0)
-		repeater_rm_by_id(repeaterc-1, 1);
-	raise(SIGUSR1);
+	signal(SIGCHLD, SIG_IGN);
+	signal(SIGCLD, SIG_IGN);
+	for (int i = 0; i < repeaterc; i++) {
+		lprintf(LOG_INFO, "Send quit signal to service %s …", repeaters[i]->service);
+		kill(repeaters[i]->pid, SIGQUIT);
+	}
 }

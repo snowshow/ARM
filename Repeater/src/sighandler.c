@@ -2,7 +2,7 @@
 #include <sys/wait.h>
 #include <stdlib.h>
 
-#include "handler.h"
+#include "rephandler.h"
 #include "sighandler.h"
 #include "log.h"
 
@@ -25,7 +25,6 @@ int install_sig_handler(int signo, int flags,
 
 void listenquit_sig_handler(int signo)
 {
-	lprintf(LOG_INFO, "lisenquit_sig_handler: Quit signal received (%i: %s)", signo, sys_siglist[signo]);
 	run = 0;
 }
 
@@ -34,10 +33,8 @@ void quit_sig_handler(int signo)
 	sigset_t allsigmask;
 	sigfillset(&allsigmask); /* All signals */
 	sigprocmask(SIG_SETMASK, &allsigmask, NULL);
-	lprintf(LOG_INFO, "quit_sig_handler: Quit signal received (%i: %s)", signo, sys_siglist[signo]);
 	signal(SIGCHLD, SIG_IGN); /* Ignore sons quit signal */
 	repeater_rm_all();
-	lprintf(LOG_INFO, "quit_sig_handler: All repeater killed");
 	run = 0;
 }
 
@@ -48,11 +45,9 @@ void son_sig_handler(int signo)
 	sigprocmask(SIG_SETMASK, &allsigmask, &backupsigmask);
 	int status;
 	int pid = wait(&status);
-	lprintf(LOG_INFO, "sin_sig_handler: Son quit signal received (%i: %s, pid: %i)", signo, sys_siglist[signo], pid);
-	repeater_rm_by_pid(pid, 0);
-	lprintf(LOG_NOTICE, "removed");
+	repeater_rm_by_pid(pid);
 	if (status != 0) {
-		lprintf(LOG_NOTICE, "Process %i quit with status %i", pid, status);
+		lprintf(LOG_WARNING, "Process %i quit with status %i", pid, status);
 	}
 	sigprocmask(SIG_SETMASK, &backupsigmask, NULL);
 }
