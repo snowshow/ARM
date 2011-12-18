@@ -40,6 +40,7 @@ void quit_sig_handler(int signo)
 
 void son_sig_handler(int signo)
 {
+	printf("signal:%i\n", signo);
 	sigset_t allsigmask, backupsigmask;
 	sigfillset(&allsigmask); /* All signals */
 	sigprocmask(SIG_SETMASK, &allsigmask, &backupsigmask);

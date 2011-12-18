@@ -3,7 +3,7 @@
 #include <stdlib.h> // exit()
 #include <string.h> // strlen()
 
-//#define DEBUG
+#define DEBUG
 
 int pipes[2];
 

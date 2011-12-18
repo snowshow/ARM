@@ -10,6 +10,7 @@
 #include "log.h"
 #include "server.h"
 #include "repeater.h"
+#include "sighandler.h"
 
 #define MAX_REPEATER 64
 #define SERVNAME_LENGTH 256
@@ -52,6 +53,14 @@ int repeater_count()
 	return repeaterc;
 }
 
+char* get_service_by_id(int id)
+{
+	if (id < repeaterc)
+		return repeaters[id]->service;
+	else
+		return NULL;
+}
+
 int add_repeater(char* service)
 {
 	int socket;
@@ -72,7 +81,7 @@ int add_repeater(char* service)
 				lprintf(LOG_ERR, "lisen_connection failed");
 				exit(EXIT_FAILURE);
 			}
-			lprintf(LOG_INFO, "Service %s stoped", service);
+			lprintf(LOG_INFO, "Service %s stopped", service);
 			exit(EXIT_SUCCESS);
 		default: // Father
 			close(socket);
@@ -132,7 +141,6 @@ int repeater_rm_by_id(int id)
 
 	sigemptyset(&allsigmask);
 	sigaddset(&allsigmask, SIGCHLD);
-	sigaddset(&allsigmask, SIGCLD);
 	sigprocmask(SIG_BLOCK, &allsigmask, &backupsigmask);
 	
 	//lprintf(LOG_INFO, "Service %s shutdown", repeaters[id]->service, repeaters[id]->pid);
@@ -145,12 +153,25 @@ int repeater_rm_by_id(int id)
 	return 0;
 }
 
+int repeater_stop_by_service(char* service)
+{
+	for (int i = 0; i < repeaterc; i++) {
+		if (!strcmp(repeaters[i]->service, service)) {
+			kill(repeaters[i]->pid, SIGQUIT);
+			return 0;
+		}
+	}
+	return -1;
+}
+
 void repeater_rm_all()
 {
 	signal(SIGCHLD, SIG_IGN);
-	signal(SIGCLD, SIG_IGN);
 	for (int i = 0; i < repeaterc; i++) {
 		lprintf(LOG_INFO, "Send quit signal to service %s …", repeaters[i]->service);
 		kill(repeaters[i]->pid, SIGQUIT);
 	}
+	repeaterc = 0;
+	usleep(100000); // Là j'ai pas d'idée de solution miracle :/
+	install_sig_handler(SIGCHLD, SA_RESTART, NULL, son_sig_handler);
 }

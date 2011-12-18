@@ -48,8 +48,8 @@ int run_repeater_on(int listening_socket)
 		if (select(FD_SETSIZE, &fdset, NULL, NULL, NULL) <= 0) {
 			if (errno != EINTR) {
 				lprintf(LOG_WARNING, "select: %s", strerror(errno));
-				continue;
 			}
+			continue; // Go re-check run
 		}
 		if (FD_ISSET(listening_socket, &fdset)) {
 			length = sizeof(struct sockaddr_in);
@@ -65,7 +65,6 @@ int run_repeater_on(int listening_socket)
 		}
 		for (int i = 0; i < socketc; i++) {
 			if (FD_ISSET(sockets[i], &fdset)) {
-				//~ lprintf(LOG_INFO, "Read data from socket %i", i);
 				int nbyte;
 				if ((nbyte = read(sockets[i], buffer, BUF_SIZE-1)) < 0) {
 					if (errno != EAGAIN && errno != EWOULDBLOCK)
@@ -75,15 +74,11 @@ int run_repeater_on(int listening_socket)
 					close(sockets[i]);
 					sockets[i] = sockets[--socketc];
 				} else {
-					//~ sprintf(LOG_INFO, "%i bytes read from socket %i", nbyte, i);
 					for (int j = 0; j < socketc ; j++) {
 						if (i != j) {
 							fcntl(socket, F_SETFL, fcntl(listening_socket, F_GETFL) | O_NONBLOCK);
 							if (send(sockets[j], buffer, nbyte, 0) < 0) {
 								lerror(LOG_WARNING, "send");
-							}
-							if (fsync(sockets[j]) < 0) {
-								lerror(LOG_WARNING, "fsync");
 							}
 							fcntl(socket, F_SETFL, fcntl(listening_socket, F_GETFL) & ~O_NONBLOCK);
 						}

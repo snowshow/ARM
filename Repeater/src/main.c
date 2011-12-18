@@ -22,7 +22,7 @@
 #include "rephandler.h"
 #include "server.h"
 
-//#define DYNAMIC
+#define DYNAMIC
 
 #ifdef DYNAMIC
 #define BUF_SIZE 1024
@@ -94,7 +94,7 @@ int main(int argc, char** argv)
 
 #ifdef DYNAMIC
 	if (handlerserv == NULL)
-			handlerserv = "3521";
+			handlerserv = "3519";
 
 	if ((handlersock = create_tcp_server(NULL, handlerserv)) < 0) {
 		reply_to_father("Can't create main handler server, will exit");
@@ -128,12 +128,7 @@ int main(int argc, char** argv)
 	sigaddset(&exitsigset, SIGTERM);
 	sigaddset(&exitsigset, SIGINT);
 
-#ifndef DYNAMIC
-	sigset_t oldsigset;
-	sigprocmask(SIG_BLOCK, &exitsigset, &oldsigset);
-	while (run)
-		sigsuspend(&oldsigset);
-#else
+#ifdef DYNAMIC
 	char buffer[BUF_SIZE];
 	int sockets[32];
 	int socket;
@@ -149,10 +144,10 @@ int main(int argc, char** argv)
             FD_SET(sockets[i], &fdset);
         }
         if (select(FD_SETSIZE, &fdset, NULL, NULL, NULL) <= 0) {
-            if (errno != EINTR) {
-                lprintf(LOG_WARNING, "select: %s", strerror(errno));
-                continue;
-            }
+			if (errno != EINTR) {
+				lprintf(LOG_WARNING, "select: %s", strerror(errno));
+			}
+			continue; // Go re-check run
         }
         if (FD_ISSET(handlersock, &fdset)) {
             length = sizeof(struct sockaddr_in);
@@ -177,39 +172,85 @@ int main(int argc, char** argv)
                     sockets[i] = sockets[--socketc];
                     lprintf(LOG_INFO, "Connection closed (remaining: %i)", socketc);
                 } else {
-					write(STDOUT_FILENO, buffer, nbyte);
-					char cmd[20];
 					int pos = 0;
-					while (pos < 20 && buffer[pos] != ' ') {
+					int apos = 0;
+					char cmd[20];
+					char arg[20];
+					
+					while (pos < nbyte && buffer[pos] != ' ') {
 						cmd[pos] = buffer[pos];
 						pos++;
 					}
-					if (strcmp(cmd, "START") == 0) {
-						printf("start\n");
-					} else if (strcmp(cmd, "STOP") == 0) {
-						printf("stop\n");
-					} else if (strcmp(cmd, "EXIT") == 0) {
-						printf("exit\n");
-					} else if (strcmp(cmd, "LIST") == 0) {
-						printf("list\n");
+					if (pos == nbyte)
+						cmd[pos-1] = '\0';
+					else
+						cmd[pos] = '\0';
+					
+					pos++;
+					while (pos < nbyte && buffer[pos] != ' ') {
+						arg[apos] = buffer[pos];
+						pos++; apos++;
 					}
-                    //sprintf(LOG_INFO, "%i bytes read from socket %i", nbyte, i);
-                    //for (int j = 0; j < socketc ; j++) {
-                    //    if (i != j) {
-                    //        fcntl(socket, F_SETFL, fcntl(listening_socket, F_GETFL) | O_NONBLOCK);
-                    //        if (send(sockets[j], buffer, nbyte, 0) < 0) {
-                    //            lerror(LOG_WARNING, "send");
-                    //        }
-                    //        if (fsync(sockets[j]) < 0) {
-                    //            lerror(LOG_WARNING, "fsync");
-                    //        }
-                    //        fcntl(socket, F_SETFL, fcntl(listening_socket, F_GETFL) & ~O_NONBLOCK);
-                    //    }
-					//}
+					if (pos == nbyte)
+						arg[apos-1] = '\0';
+					else
+						arg[apos] = '\0';
+					
+					fcntl(socket, F_SETFL, fcntl(sockets[i], F_GETFL) | O_NONBLOCK); // Block mode
+					
+					char answer[256];
+					if (!strcmp(cmd, "START") || !strcmp(cmd, "start")) {
+						if (strlen(arg) == 0) {
+							printf("No service specified\n");
+						} else if (add_repeater(arg) < 0) {
+							sprintf(answer, "Failed to start service %s\n", arg);
+						} else {
+							sprintf(answer, "Service %s started\n", arg);
+						}
+						send(sockets[i], answer, strlen(answer), 0);
+					} else if (!strcmp(cmd, "STOP") || !strcmp(cmd, "stop")) {
+						if (strlen(arg) == 0) {
+							sprintf(answer, "No service specified\n");
+							send(sockets[i], answer, strlen(answer), 0);
+						} else if (!strcmp(arg, "ALL") || !strcmp(arg, "all")) {
+							repeater_rm_all();
+						} else if (repeater_stop_by_service(arg) < 0) {
+							sprintf(answer, "Failed to stop service %s\n", arg);
+							send(sockets[i], answer, strlen(answer), 0);
+						} else {
+							sprintf(answer, "Service %s stopped\n", arg);
+							send(sockets[i], answer, strlen(answer), 0);
+						}
+					} else if (!strcmp(cmd, "LIST") || !strcmp(cmd, "list")) {
+						int repeaterc = repeater_count();
+						for (int id = 0 ; id < repeaterc ; id++) {
+							sprintf(answer, "%s\n", get_service_by_id(id));
+							send(sockets[i], answer, strlen(answer), 0);
+						}
+					} else if (!strcmp(cmd, "EXIT") || !strcmp(cmd, "exit") || !strcmp(cmd, "QUIT") || !strcmp(cmd, "quit")) {
+						raise(SIGQUIT);
+					} else if (!strcmp(cmd, "CLOSE") || !strcmp(cmd, "close")) {
+						close(sockets[i]);
+						sockets[i] = sockets[--socketc];
+						lprintf(LOG_INFO, "Connection closed (remaining: %i)", socketc);
+						send(sockets[i], answer, strlen(answer), 0);
+					} else {
+						cmd[nbyte-1] = '\0'; // Del end-line character
+						sprintf(answer, "%s: Unknow command\n", cmd);
+						send(sockets[i], answer, strlen(answer), 0);
+					}
+					
+					fcntl(socket, F_SETFL, fcntl(sockets[i], F_GETFL) & ~O_NONBLOCK); // Unblock mode
 				}
 			}
 		}
 	}
+	close(handlersock);
+#else
+	sigset_t oldsigset;
+	sigprocmask(SIG_BLOCK, &exitsigset, &oldsigset);
+	while (run)
+		sigsuspend(&oldsigset);
 #endif
 
 	unlink(pidfilename); // Suppression du fichier de pid

@@ -49,7 +49,7 @@ void lprintf(int log, const char *format, ...)
 			date->tm_mday, date->tm_mon,
 			date->tm_hour, date->tm_min, date->tm_sec);
 	
-	fprintf(logfile, "[%s] \t", service);
+	fprintf(logfile, "<%s> \t", service);
 	
 	switch (log) {
 		case LOG_INFO:
