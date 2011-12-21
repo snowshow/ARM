@@ -58,6 +58,16 @@ int getargs (int argc, char** argv, struct sockaddr_in * address, char * protoco
 	return 0;
 }
 
+char ntoh(int i)
+{
+	if (i < 10)
+		return i + '0';
+	else
+		return i - 10 + 'A';
+}
+
+int cantostr(char* str, uint8_t* can, int length);
+
 int main (int argc, char** argv)
 {
 	struct sockaddr_in address;
@@ -79,21 +89,59 @@ int main (int argc, char** argv)
 		exit(EXIT_FAILURE);
 	}
 	setvbuf(stdout, NULL, _IONBF, 0);
+	char* str = malloc(256*sizeof(char));
 	while (1) {
 		if ((n = recv(sock, packet, 12, 0)) == 0) /* EOF */
 			break;
-		//~ int i;
-		//~ for (i = 0; i < n ; i++) {
-			//~ fprintf(stdout, "[%c](%i) ", packet[i], packet[i]);
-			//~ fprintf(stdout, "%c%c ", ctoh(packet[i]>>4), ctoh(packet[i]%16));
-		//~ }
-		//~ fprintf(stdout, "\n");
-		if (n < 0) {
-			perror("recv");
-			exit(EXIT_FAILURE);
+		int i;
+		for (i = 0; i < n ; i++) {
+			fprintf(stdout, "%c%c ", ntoh(packet[i]>>4), ntoh(packet[i]%16));
 		}
-		write(STDOUT_FILENO, buffer, length);
+		fprintf(stdout, "\n");
+		int id;
+		if ((id = cantostr(str, packet, n)) < 0) {
+			fprintf(stdout, "err: %s\n", str);
+		} else {
+			fprintf(stdout, "%i\t%s", id, str);
+		}
+		//if (n < 0) {
+		//	perror("recv");
+		//	exit(EXIT_FAILURE);
+		//}
+		//write(STDOUT_FILENO, buffer, length);
 	}
 	return EXIT_SUCCESS;
 }
 
+int cantostr(char* str, uint8_t* can, int length)
+{
+	int id;
+	int pos;
+	if (length < 4) {
+		sprintf(str, "length < 4", strlen("length < 4"));
+		return -1;
+	} else if (length > 12) {
+		sprintf(str, "length > 12", strlen("length > 12"));
+		return -1;
+	} else if (can[0] != 0xFD) {
+		fprintf(stdout, "%i\n", can[0]);
+		sprintf(str, "0xFD", strlen("0xFD"));
+		return -1;
+	} else if (can[length-1] != 0xBF) {
+		fprintf(stdout, "can[%i]=%i\n", length-1, can[length-1]);
+		sprintf(str, "0xBF", strlen("0xBF"));
+		return -1;
+	}
+	int len = can[1] >> 4;
+	id = ((can[1]%16)<<8) + can[2];
+	if (len + 4 != length) {
+		sprintf(str, "len+4=%i≠lenth=%i", len, length);
+		return -1;
+	}
+	int i;
+	for (i = 0 ; i < len ; i++) {
+		str[i] = can[3+i];
+	}
+	str[i] = '\n';
+	return id;
+}

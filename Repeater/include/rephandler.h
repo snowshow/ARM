@@ -1,3 +1,5 @@
+#ifndef _REPHANDLER_H
+#define _REPHANDLER_H
 
 int handler_init();
 void lservice(char* service);
@@ -15,3 +17,5 @@ int repeater_rm_by_pid(int pid);
 int repeater_rm_by_id(int id);
 int repeater_stop_by_service(char* service);
 void repeater_rm_all();
+
+#endif
