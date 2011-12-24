@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
 	signal(SIGTERM, quit);
 	signal(SIGINT, quit);
 	int state = 1;
-	int id;
+	int id = 0;
 	uint8_t data[8];
 	int length = 0;
 	run = 1;
@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
 			state = -length;
 		} else if (state == 0) {
 			if (c == 0xBF) {
-				printf("%i\t", id);
+				printf("%d\t", id);
 				for (int i = length-1 ; i >= 0 ; i--) {
 					printf("%c%c ", itoh(data[i]>>4), itoh(data[i]%16));
 				}

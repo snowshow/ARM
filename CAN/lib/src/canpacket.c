@@ -1,6 +1,7 @@
 #include <stdarg.h>
+#include <stdint.h>
 
-int canpacket(char* packet, int id, int length, ...)
+int canpacket(uint8_t *packet, int id, int length, ...)
 {
     va_list va;
     int i;
