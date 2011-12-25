@@ -33,7 +33,7 @@ int getargs(int argc, char* argv[], int *delay)
 	while ((option = getopt(argc, argv, options)) < 0) {
 		switch (option) {
 			case 'd':
-				scanf("%d", optarg);
+				sscanf(optarg, "%d", *delay);
 				break;
 			case '?':
 				exit(1);

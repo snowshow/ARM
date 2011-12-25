@@ -1,0 +1,4 @@
+typedef struct can_t
+CAN_send
+CAN_init
+CAN_packet
