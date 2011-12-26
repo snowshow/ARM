@@ -1,4 +1,4 @@
-EXEC = bin/emitter bin/decoder
+EXEC = bin/test bin/decoder
 
 CC = gcc
 LD = gcc
@@ -25,5 +25,9 @@ mrproper: clean
 	rm -f bin/$(EXEC)
 
 rebuild: mrproper all
+
+librebuild: mrproper
+	make -C lib mrproper
+	make all
 
 .PHONY: clean mrproper
