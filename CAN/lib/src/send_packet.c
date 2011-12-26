@@ -26,7 +26,9 @@ int CAN_send_packet(int fd, can_t const * packet)
 		raw[i+3] = packet->data[i];
 	}
 	raw[i+3] = 0xBF;
-	write(fd, raw, i+4);
+	if (write(fd, raw, i+4) == -1) {
+		return -1;
+	}
 	fsync(fd);
 	return 0;
 }
