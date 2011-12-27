@@ -7,17 +7,15 @@
 
 int main(int argc, char* argv[])
 {
-	can_t* packet;
+	can_t packet;
 	while (1) {
-		packet = NULL;
-		packet = CAN_packet(1845, 6, 'a', 'b', 'c', 'd', 'e', 'f');
-		if (packet == NULL) {
+		if (CAN_packet(&packet, 1845, 6, 'a', 'b', 'c', 'd', 'e', 'f') < 0) {
 			perror("CAN_packet");
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
-		CAN_send_packet(1, packet);
+		CAN_write(STDOUT_FILENO, &packet);
 		fflush(stdout);
-		sleep(1);
+		usleep(100);
 	}
 
 	return 0;

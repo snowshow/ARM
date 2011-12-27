@@ -1,4 +1,4 @@
-EXEC = bin/test bin/decoder
+EXEC = bin/exemple-stdout bin/decoder
 
 CC = gcc
 LD = gcc
