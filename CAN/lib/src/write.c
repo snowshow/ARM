@@ -3,11 +3,11 @@
 #include <stdarg.h>
 #include <errno.h>
 #include <unistd.h>
-#include <stdio.h>
+//#include <stdio.h>
 
 #include "can.h"
 
-int CAN_send_packet(int fd, can_t const * packet)
+int CAN_write(int fd, can_t const * packet)
 {
 	int i;
 	int id;

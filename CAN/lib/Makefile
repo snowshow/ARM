@@ -7,8 +7,8 @@ LIBDIR = .
 CC = gcc
 LD = gcc
 
-CFLAGS = -std=gnu99
-LDFLAGS = -shared 
+CFLAGS = -std=gnu99 -Iinclude -fPIC
+LDFLAGS = -shared
 DEBUG = -g
 WARNING = -Wall -pedantic
 OPTIMIZE = -O3
