@@ -25,16 +25,16 @@ $(LIB): $(OBJ)
 	$(LD) $(DEBUG) $(WARNING) $(OPTIMIZE) $(LDFLAGS) -o $@ $^
 
 $(LIBDIR):
-	mkdir -p $(LIBDIR)
+	@mkdir -p $(LIBDIR)
 
 $(OBJDIR):
-	mkdir -p $(OBJDIR)
+	@mkdir -p $(OBJDIR)
 
 clean:
-	rm -f $(OBJ)
+	@rm -f $(OBJ)
 
 mrproper: clean
-	rm -f $(LIB)
+	@rm -f $(LIB)
 
 rebuild: mrproper all
 

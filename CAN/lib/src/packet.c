@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "can.h"
 
@@ -12,6 +13,8 @@ int CAN_packet(can_t * packet, int id, int length, ...)
     int i;
 	int b;
 
+	memset(packet, 0, sizeof(can_t));
+	
 	if (id > 2048 || id < 0) {
 		errno = EINVAL;
 		return -1;
@@ -31,7 +34,7 @@ int CAN_packet(can_t * packet, int id, int length, ...)
 			errno = EINVAL;
 			return -1;
 		}
-		packet->b[i] = b;
+		CAN_set(packet, i, b);
 	}
 	va_end(va);
 

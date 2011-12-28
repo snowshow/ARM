@@ -6,9 +6,20 @@
 typedef struct {
 	int id;
 	int length;
-	uint8_t b[8];
+	uint8_t b1;
+	uint8_t b2;
+	uint8_t b3;
+	uint8_t b4;
+	uint8_t b5;
+	uint8_t b6;
+	uint8_t b7;
+	uint8_t b8;
 } can_t;
 
+void CAN_set(can_t * packet, int b, uint8_t c);
+int CAN_on_event(int mask, int filter, void (*event)(can_t));
+int CAN_listen_on(int fd);
+uint8_t CAN_get(can_t const * packet, int b);
 
 /** Renvoit une structure can_t initialisé à partir des données passées en
  * arguments. Échoue si l'espace mémoire disponible est insuffisant. Renvoit
@@ -31,6 +42,6 @@ int CAN_write(int fd, can_t const * packet);
  * @param event Pointeur sur une fonction du type void (*event)(can_t*) qui sera
  * appelé en cas de réception de données CAN.
  */
-int CAN_recv(int fd, void (*event)(can_t*));
+//int CAN_recv(int fd, int mask, void (*event)(can_t));
 
 #endif

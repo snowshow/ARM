@@ -1,4 +1,3 @@
-typedef struct can_t
-CAN_send
-CAN_init
-CAN_packet
+typedef struct can_t … checkk
+CAN_send … check
+CAN_packet … check

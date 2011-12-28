@@ -15,7 +15,7 @@ int main(int argc, char* argv[])
 		}
 		CAN_write(STDOUT_FILENO, &packet);
 		fflush(stdout);
-		usleep(100);
+		usleep(1000000);
 	}
 
 	return 0;

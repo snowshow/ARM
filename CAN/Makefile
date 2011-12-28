@@ -1,4 +1,4 @@
-EXEC = bin/exemple-stdout bin/decoder
+EXEC = bin/exemple-stdout bin/test-1 bin/emitter
 
 CC = gcc
 LD = gcc
@@ -13,21 +13,21 @@ OPTIMIZE = -O3
 all: sharedlib $(EXEC)
 
 sharedlib:
-	make -C lib
+	@make -C lib
 
 bin/%: src/%.c
 	$(LD) $(DEBUG) $(WARNING) $(OPTIMIZE) $(CFLAGS) $(LDFLAGS) -o $@ $^
 
 clean:
-	rm -f $(OBJ)
+	@rm -f $(OBJ)
 
 mrproper: clean
-	rm -f bin/$(EXEC)
+	@rm -f bin/$(EXEC)
 
 rebuild: mrproper all
 
 librebuild: mrproper
-	make -C lib mrproper
-	make all
+	@make -C lib mrproper
+	@make all
 
 .PHONY: clean mrproper

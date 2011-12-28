@@ -9,18 +9,20 @@
 #define DELAY 1000000
 #define SEC 1000000
 
+int getargs(int argc, char* argv[], int *delay);
 
 int main (int argc, char* argv[])
 {
-	char *packet = malloc(sizeof(char));
-	memset(packet, 0, 12);
-	int length = 6;
-	canpacket(packet, 1845, length, 'a', 'b', 0x26, 'd', 'e', 'f');
 	int delay = DELAY;
+	can_t packet;
+	CAN_packet(&packet, 15, 3, 'a', 'b', 'c');
+
+	int pos = getargs(argc, argv, &delay);
+	printf("%ii\n", pos);
 
 	while (1) {
-		write(STDOUT_FILENO, packet, length+4);
-		usleep(DELAY);
+		CAN_write(STDOUT_FILENO, &packet);
+		usleep(delay);
 	}
 	return EXIT_SUCCESS;
 }
@@ -33,11 +35,13 @@ int getargs(int argc, char* argv[], int *delay)
 	while ((option = getopt(argc, argv, options)) < 0) {
 		switch (option) {
 			case 'd':
-				sscanf(optarg, "%d", *delay);
+				sscanf(optarg, "%d", delay);
 				break;
 			case '?':
 				exit(1);
 		}
 	}
+
+	return option;
 }
 
