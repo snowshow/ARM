@@ -17,7 +17,8 @@ void daemonize()
 		exit(EXIT_FAILURE);
 	}
 
-	chdir("/"); // Unblock mount point
+	//chdir("/"); // Unblock mount point
+	chdir("/home/elie/7Robot/ARM/Repeater/var/");
 	if (fork() != 0) {
 		close(pipes[1]);
 		if ((n = read(pipes[0], buffer, 1024)) < -1) {

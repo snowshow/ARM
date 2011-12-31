@@ -12,16 +12,22 @@
 #include "sighandler.h"
 
 #define MAX_CONNECTION 64
-#define BUF_SIZE 128
+#define BUF_SIZE 1024
 
 int run_repeater_on(int listening_socket)
 {
 	struct sockaddr_in address;
-	socklen_t length;
+	socklen_t length = sizeof(struct sockaddr_in);
 	int sockets[MAX_CONNECTION];
 	int socketc = 0;
 	int socket;
-	char buffer[BUF_SIZE];
+	
+	char listen_buffer[BUF_SIZE];
+	int listen;
+	char target_buffer[MAX_CONNECTION][BUF_SIZE];
+	int target[MAX_CONNECTION];
+	int written;
+	int pending;
 	
 	/* accept is an exemple of interruptible function, that should not be restarted on SIGQUIT, SIGINT, … */
 	install_sig_handler(SIGQUIT, 0, NULL, listenquit_sig_handler);
@@ -38,55 +44,82 @@ int run_repeater_on(int listening_socket)
 	
 	run = 1;
 
-	fd_set fdset;
-	while (run) { // Control ?
-		FD_ZERO(&fdset);
-		FD_SET(listening_socket, &fdset);
+	fd_set listenfdset;
+	fd_set targetfdset;
+
+	while (run) { // accès conccurent ?
+		
+		FD_ZERO(&listenfdset);
+		FD_SET(listening_socket, &listenfdset);
 		for (int i = 0; i < socketc; i++) {
-			FD_SET(sockets[i], &fdset);
+			FD_SET(sockets[i], &listenfdset);
 		}
-		if (select(FD_SETSIZE, &fdset, NULL, NULL, NULL) <= 0) {
+
+		if (select(FD_SETSIZE, &listenfdset, NULL, NULL, NULL) < 0) {
 			if (errno != EINTR) {
-				lprintf(LOG_WARNING, "select: %s", strerror(errno));
+				lerror(LOG_WARNING, "select (listenfdset)");
+			} else {
+				continue;
 			}
-			continue; // Go re-check run
 		}
-		if (FD_ISSET(listening_socket, &fdset)) {
-			length = sizeof(struct sockaddr_in);
+
+		if (FD_ISSET(listening_socket, &listenfdset)) {
+			// Client connection
 			socket = accept(listening_socket, (struct sockaddr*)(&address), &length);
 			if (socket != -1) {
 				fcntl(socket, F_SETFL, fcntl(listening_socket, F_GETFL) | O_NONBLOCK);
+				target[socketc] = 0;
 				sockets[socketc++] = socket;
-				lprintf(LOG_INFO, "Socket %i connected", socketc);
+				lprintf(LOG_INFO, "%i connections [+1]", socketc);
 			} else if (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK) {
 				lerror(LOG_ERR, "accept");
 				return -1;
 			}
 		}
 		for (int i = 0; i < socketc; i++) {
-			if (FD_ISSET(sockets[i], &fdset)) {
-				int nbyte;
-				if ((nbyte = read(sockets[i], buffer, BUF_SIZE-1)) < 0) {
-					if (errno != EAGAIN && errno != EWOULDBLOCK && errno != ECONNRESET)
+			if (FD_ISSET(sockets[i], &listenfdset)) {
+				// There are data to read
+				if ((listen = read(sockets[i], listen_buffer, BUF_SIZE)) <= 0) {
+					if (listen < 0 && errno != EAGAIN && errno != EWOULDBLOCK && errno != ECONNRESET)
 						lerror(LOG_WARNING, "read");
-					lprintf(LOG_INFO, "Socket %i closed", i);
 					close(sockets[i]);
 					sockets[i] = sockets[--socketc];
-				} else if (nbyte == 0) {
-					lprintf(LOG_INFO, "Socket %i closed", i);
-					close(sockets[i]);
-					sockets[i] = sockets[--socketc];
+					//lprintf(LOG_INFO, "%i connections [-1]", socketc);
 				} else {
-					for (int j = 0; j < socketc ; j++) {
-						if (i != j) {
-							if (fcntl(socket, F_SETFL, fcntl(listening_socket, F_GETFL) & ~O_NONBLOCK) < 0) {
-								lerror(LOG_WARNING, "fcntl");
+					for (int j = 0 ; j < socketc ; j++) {
+						if (j != i) {
+							memcpy(target_buffer[j], listen_buffer, listen);
+							target[j] = listen;
+						}
+					}
+					//lprintf(LOG_INFO, "%i bytes read, go writting", listen);
+					while (1) {
+						pending = 0;
+						FD_ZERO(&targetfdset);
+						for (int i = 0 ; i < socketc ; i++) {
+							if (target[i] > 0) {
+								pending++;
+								FD_SET(sockets[i], &targetfdset);
 							}
-							if (write(sockets[j], buffer, nbyte) < 0) {
-								lerror(LOG_WARNING, "write");
+						}
+						//lprintf(LOG_INFO, "%i target remaining", pending);
+						if (!pending)
+							break;
+						if (select(FD_SETSIZE, NULL, &targetfdset, NULL, NULL) < 0) {
+							if (errno != EINTR) {
+								lerror(LOG_WARNING, "select (targetfdset)");
+							} else {
+								continue;
 							}
-							if (fcntl(socket, F_SETFL, fcntl(listening_socket, F_GETFL) | O_NONBLOCK) < 0) {
-								lerror(LOG_WARNING, "fcntl");
+						}
+						for (int i = 0 ; i < socketc ; i++) {
+							if (FD_ISSET(sockets[i], &targetfdset)) {
+								if ((written = write(sockets[i], target_buffer[i], target[i])) < 0) {
+									lerror(LOG_WARNING, "write");
+								} else if (written != 0) {
+									memmove(target_buffer[i], &(target_buffer[i][written]), target[i] - written);
+									target[i] -= written;
+								}
 							}
 						}
 					}

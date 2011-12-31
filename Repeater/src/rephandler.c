@@ -168,7 +168,7 @@ void repeater_rm_all()
 {
 	signal(SIGCHLD, SIG_IGN);
 	for (int i = 0; i < repeaterc; i++) {
-		lprintf(LOG_INFO, "Send quit signal to service %s …", repeaters[i]->service);
+		lprintf(LOG_INFO, "Send quit signal to service %s (pid %i) …", repeaters[i]->service, repeaters[i]->pid);
 		kill(repeaters[i]->pid, SIGQUIT);
 	}
 	repeaterc = 0;
