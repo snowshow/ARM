@@ -6,9 +6,7 @@
 
 void listener(can_t packet)
 {
-	write(STDOUT_FILENO, "{", 1);
-	CAN_write(1, &packet);
-	write(STDOUT_FILENO, "}\n", 2);
+	CAN_decimal_write(1, &packet);
 }
 
 int main(int argc, char * argv[])
@@ -19,8 +17,9 @@ int main(int argc, char * argv[])
 	if (CAN_on_event(0xAFF, 15, listener) < 0) {
 		perror("CAN_on_event");
 	}
-	if (CAN_listen_on(STDIN_FILENO) < 0) {
+	if (CAN_listen_on(STDIN_FILENO, CT_CAN) < 0) {
 		perror("CAN_listen_on");
 	}
-	sleep(10);
+	while (1)
+		sleep(10);
 }

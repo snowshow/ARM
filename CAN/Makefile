@@ -1,4 +1,4 @@
-EXEC = bin/exemple-stdout bin/test-1 bin/emitter
+EXEC = bin/emitter bin/converter
 
 CC = gcc
 LD = gcc
@@ -8,7 +8,8 @@ CFLAGS = -std=gnu99 -Iinclude
 LDFLAGS = -lrt -lcan -Llib 
 DEBUG = -g
 WARNING = -Wall -pedantic
-OPTIMIZE = -O3
+OPTIMIZE = 
+#-O3
 
 all: sharedlib $(EXEC)
 
@@ -29,5 +30,8 @@ rebuild: mrproper all
 librebuild: mrproper
 	@make -C lib mrproper
 	@make all
+
+install: all
+	@make -C lib install
 
 .PHONY: clean mrproper

@@ -11,9 +11,10 @@ CFLAGS = -std=gnu99 -Iinclude -fPIC
 LDFLAGS = -shared
 DEBUG = -g
 WARNING = -Wall -pedantic
-OPTIMIZE = -O3
+OPTIMIZE = 
+#-O3
 
-SRC = $(wildcard src/*.c)
+SRC = $(wildcard $(SRCDIR)/*.c)
 OBJ = $(subst $(SRCDIR), $(OBJDIR), $(SRC:.c=.o))
 
 all: $(LIBDIR) $(OBJDIR) $(LIB)
@@ -23,9 +24,6 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c
 
 $(LIB): $(OBJ)
 	$(LD) $(DEBUG) $(WARNING) $(OPTIMIZE) $(LDFLAGS) -o $@ $^
-
-$(LIBDIR):
-	@mkdir -p $(LIBDIR)
 
 $(OBJDIR):
 	@mkdir -p $(OBJDIR)
@@ -37,5 +35,8 @@ mrproper: clean
 	@rm -f $(LIB)
 
 rebuild: mrproper all
+
+install: all
+	cp $(LIB) /usr/lib
 
 .PHONY: clean mrproper

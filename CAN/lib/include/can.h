@@ -16,9 +16,15 @@ typedef struct {
 	uint8_t b8;
 } can_t;
 
+typedef enum {
+	bin,
+	dec,
+	hex
+} can_f;
+
 void CAN_set(can_t * packet, int b, uint8_t c);
 int CAN_on_event(int mask, int filter, void (*event)(can_t));
-int CAN_listen_on(int fd);
+int CAN_listen_on(int fd, can_f);
 uint8_t CAN_get(can_t const * packet, int b);
 
 /** Renvoit une structure can_t initialisé à partir des données passées en
@@ -34,7 +40,7 @@ int CAN_packet(can_t * packet, int id, int length, ...);
  * @param packet Structure contenant les données à transmettre.
  * @return 0 en cas de succès, -1 en cas d'échec (consulter errno)
  */
-int CAN_write(int fd, can_t const * packet);
+int CAN_write(int fd, can_t const * packet, int format);
 
 /** Enregistre une fonction qui sera appelé en cas de données can arrivant sur
  * le file descriptor passé en argument.
