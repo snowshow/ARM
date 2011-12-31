@@ -81,12 +81,10 @@ int CAN_hex_write(int fd, can_t const * packet)
 		return -1;
 	}
 	for (int i = 0 ; i < packet->length ; i++) {
-		char h1, h2;
-		itoh(CAN_get(packet, i), &h1, &h2);
 		if (i == 0) {
-			sprintf(buffer, "\t%c%c", h1, h2);
+			sprintf(buffer, "\t%X", CAN_get(packet, i));
 		} else {
-			sprintf(buffer, " %c%c", h1, h2);
+			sprintf(buffer, " %02X", CAN_get(packet, i));
 		}
 		if (write(fd, buffer, strlen(buffer)) == -1) {
 			return -1;

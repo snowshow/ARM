@@ -31,7 +31,10 @@ librebuild: mrproper
 	@make -C lib mrproper
 	@make all
 
-install: all
+install-lib: sharedlib
 	@make -C lib install
+
+install: install-lib
+	cp bin/* /usr/local/bin
 
 .PHONY: clean mrproper

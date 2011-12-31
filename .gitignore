@@ -1,4 +1,5 @@
 *.o
+*.bak
 *.log
 *.pid
 *.swp
