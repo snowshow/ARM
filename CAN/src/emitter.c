@@ -58,7 +58,6 @@ int main (int argc, char* argv[])
 		int b;
 		for (int i = 0 ; i < packet.length ; i++) {
 			sscanf(argv[pos++], "%d", &b);
-			printf("%i\n", b);
 			CAN_set(&packet, i, (uint8_t) b);
 		}
 
