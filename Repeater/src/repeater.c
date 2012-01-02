@@ -84,6 +84,7 @@ int run_repeater_on(int listening_socket)
 						lerror(LOG_WARNING, "read");
 					close(sockets[i]);
 					sockets[i] = sockets[--socketc];
+					lprintf(LOG_INFO, "%i connections [-1]", socketc);
 					//lprintf(LOG_INFO, "%i connections [-1]", socketc);
 				} else {
 					for (int j = 0 ; j < socketc ; j++) {
