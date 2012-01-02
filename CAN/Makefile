@@ -1,4 +1,6 @@
-EXEC = bin/emitter bin/converter
+#EXEC = bin/emitter bin/converter
+SRC = $(wildcard src/*.c)
+EXEC = $(subst src, bin, $(SRC:.c=))
 
 CC = gcc
 LD = gcc
@@ -20,10 +22,9 @@ bin/%: src/%.c
 	$(LD) $(DEBUG) $(WARNING) $(OPTIMIZE) $(CFLAGS) $(LDFLAGS) -o $@ $^
 
 clean:
-	@rm -f $(OBJ)
+	@rm -f bin/*
 
 mrproper: clean
-	@rm -f bin/$(EXEC)
 
 rebuild: mrproper all
 
@@ -34,7 +35,7 @@ librebuild: mrproper
 install-lib: sharedlib
 	@make -C lib install
 
-install: install-lib
+install:
 	cp bin/* /usr/local/bin
 
 .PHONY: clean mrproper
