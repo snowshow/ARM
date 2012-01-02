@@ -1,7 +1,7 @@
 EXEC = ia
 
-CPP = gcc
-LD = gcc
+CPP = g++
+LD = g++
 
 CPPFLAGS = -Iinclude
 LDFLAGS = 
@@ -9,16 +9,16 @@ DEBUG = -g
 WARNING = -Wall -pedantic
 OPTIMIZE = -O3
 
-SRC = $(wildcard src/*.cpp)
-OBJ = $(subst src, obj, $(SRC:.cpp=.o))
+SRC = $(wildcard src/*.cc)
+OBJ = $(subst src, obj, $(SRC:.cc=.o))
 
 all: $(EXEC)
 
 $(EXEC): $(OBJ)
 	$(LD) $(DEBUG) $(WARNING) $(LDFLAGS) -o $@ $^
 
-obj/%.o: src/%.cpp
-	$(CPP) $(CFLAGS) $(OPTIMIZE) $(DEBUG) $(WARNING) -o $@ -c $^
+obj/%.o: src/%.cc
+	$(CPP) $(CPPFLAGS) $(OPTIMIZE) $(DEBUG) $(WARNING) -o $@ -c $^
 
 clean:
 	rm -f $(OBJ)

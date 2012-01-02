@@ -1,15 +1,19 @@
 #ifndef _ROBOT_H
 #define _ROBOT_H
 
-class robot {
+class Robot {
 
 	public:
 	
+	Robot();
 	int init();
+	int addSharp(int id);
+	int addMotor(int id);
 
 	private:
 
-	int addSharp();
-}
+
+
+};
 
 #endif
