@@ -32,6 +32,7 @@ int main(int argc, char * argv[])
 {
 	char * env;
 	int option, sock1, sock2;
+	int daemon = 0;
 
 	static char * host1 = DEFAULT_HOST1;
 	static char * port1 = DEFAULT_PORT1;
@@ -120,7 +121,7 @@ int main(int argc, char * argv[])
 	/* OPT */
 	opterr = 1;
 	while (1) {
-		option = getopt(argc, argv, "1:2:h");
+		option = getopt(argc, argv, "1:2:hd");
 		if (option == -1)
 			break;
 		switch (option) {
@@ -150,6 +151,9 @@ int main(int argc, char * argv[])
 				if (opt_format2 != NULL)
 					format2 = opt_format2;
 				break;
+			case 'd':
+				daemon = 1;
+				break;
 			case 'h':
 				show_help(argv[0]);
 				exit(0);
@@ -167,11 +171,19 @@ int main(int argc, char * argv[])
 
 	if ((sock1 = open_connection(host1, port1)) < 0) {
 		fprintf(stderr, "error: open_connection(%s, %s)\n", host1, port1);
-		exit(-1);
+		exit(1);
 	}
 	if ((sock2 = open_connection(host2, port2)) < 0) {
 		fprintf(stderr, "error: open_connection(%s, %s)\n", host2, port2);
-		exit(-1);
+		exit(1);
+	}
+
+	if (daemon) {
+		chdir("/");
+		if (fork() != 0) {
+			exit(0);
+		}
+		setsid();
 	}
 
 	switch ((pid1 = fork())) {
@@ -183,7 +195,7 @@ int main(int argc, char * argv[])
 			dup2(sock2, STDOUT_FILENO);
 			execlp("converter", "converter", "-i", format1, "-o", format2, NULL);
 			perror("eveclp(converter)");
-			exit(-1);
+			exit(1);
 	}
 
 	switch ((pid2 = fork())) {
@@ -196,11 +208,16 @@ int main(int argc, char * argv[])
 			dup2(sock1, STDOUT_FILENO);
 			execlp("converter", "converter", "-i", format2, "-o", format1, NULL);
 			perror("eveclp(converter)");
-			exit(-1);
+			exit(1);
 	}
 
-	while (1)
-		pause();
+	if (daemon) {
+		exit(0);
+	} else {
+		while (1) {
+			pause();
+		}
+	}
 
 	return 0;
 }
