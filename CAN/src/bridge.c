@@ -1,4 +1,5 @@
 #include <stdio.h>
+#define _XOPEN_SOURCE 500 /* getsubopt */
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
