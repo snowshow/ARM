@@ -224,7 +224,7 @@ int main(int argc, char * argv[])
 
 void show_help(char * cmd)
 {
-	printf("Usage: %s [-(1|2) host=h,port=p,format=(bin|dec|hex)]\n", cmd);
+	printf("Usage: %s [-(1|2) host=h,port=p,format=(bin|dec|hex)] [-d]\n", cmd);
 }
 
 int parse_subopt(char * optarg, char ** host, char ** port, char ** format)
