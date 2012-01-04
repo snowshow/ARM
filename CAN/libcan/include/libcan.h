@@ -1,14 +1,77 @@
-#ifndef _CAN_H
-#define _CAN_H
+/**
+ * libcan - CAN library
+ *
+ * Copyright (C) 2012 7Robot <7robot@list.bde.enseeiht.fr>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3.0 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this library; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Boston, MA  02110-1301  USA
+ */
 
-#include <stdint.h> /* Pour uint8_t */
+#ifndef _LIBCAN_H_
+#define _LIBCAN_H_
+
+#include <stdint.h> /* uint8_t */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+/**************
+ * CAN Packet *
+ **************/
+
+/** Transparent object reprensenting a CAN packet. */
+struct can_t {
+    int id; /* ID (from 0 to 2047) */
+    int length; /* Packet length (from 0 to 8) */
+    uint8_t b1;
+    uint8_t b2;
+    uint8_t b3;
+    uint8_t b4;
+    uint8_t b5;
+    uint8_t b6;
+    uint8_t b7;
+    uint8_t b8;
+};
+
+/***********************
+ * CAN library context *
+ ***********************/
+
+/** Opaque object representing the library context. */
+struct can_ctx;
+/** Create can context library. */
+int can_new(struct can_ctx ** ctx);
+/** Take a reference of the can library context. */
+struct can_ctx * can_ref(struct can_ctx * ctx);
+/** Drop a reference of the can library context. If the refcount reaches zero,
+ * the ressources of the context will be released. */
+int can_unref(struct can_ctx * ctx);
+
+
+
+
+
 
 /**********************************/
 /* REPRÉSENTATION DES PACKETS CAN */
 /**********************************/
 
-/** Pour homogénéiser la manipulation des packets CAN par les différentes
- * fonctions, une structure commune est définit : la structure can_t (can type).
+/* Pour homogénéiser la manipulation des packets CAN par les différentes
+ * fonctions, une structure commune est définie : la structure can_t (can type).
  * Elle contient l'identifiant du packet sur 11 bits (de 0 à 2047), la
  * longueur du message (de 0 à 8 octets de données) et 8 uint8_t (nombre sur 8
  * bits, équivalent d'un unsigned char) pour chaque éventuel octet de donnée.
@@ -18,19 +81,6 @@
  * modifier manuellement la structure. En revanche, on pourra utiliser
  * directement la structure à la lecture des valeurs. */
 
-/** Définition de la structure can_t représentant les packets CAN */
-typedef struct {
-	int id;
-	int length;
-	uint8_t b1;
-	uint8_t b2;
-	uint8_t b3;
-	uint8_t b4;
-	uint8_t b5;
-	uint8_t b6;
-	uint8_t b7;
-	uint8_t b8;
-} can_t;
 
 
 /********************************/
@@ -45,7 +95,7 @@ typedef struct {
  * @return 0 en cas de succès, -1 en cas d'erreur.
  * Dans ce dernier cas, errno est modifier pour indiquer l'erreur:
  * EINTVAL: Mauvais argument */
-int CAN_packet(can_t * packet, int id, int length, ...);
+//int CAN_packet(can_t * packet, int id, int length, ...);
 
 /** Remarques pour les fonctions de manipulation de bits :
  * (CAN_get et CAN_set)
@@ -67,22 +117,22 @@ int CAN_packet(can_t * packet, int id, int length, ...);
  * @param packet Pointeur sur le packet à lire.
  * @param b Index du bit dont la valeur est souhaité, dans l'intervalle [0;7].
  */
-uint8_t CAN_get(can_t const * packet, int b);
+//uint8_t CAN_get(can_t const * packet, int b);
 
 /** Définir le b-ième bit du packet dont le pointeur est passé en argument.
  * @param packet Pointeur sur le packet à modifier.
  * @param b Index du bit dont la valeur est à modifier.
  * @param c Nouvelle valeur pour le bit à modifier. */
-void CAN_set(can_t * packet, int b, uint8_t c);
+//void CAN_set(can_t * packet, int b, uint8_t c);
 
 /** Définition de l'enum can_f (can format) représentant les différents format
  * de données représentant les informations circulant sur le bus CAN */
-typedef enum {
-	bin, /* Binaire : ce qui circule sur le bus série */
-	dec, /* Décimal : ex: 1235	12 23 42 (notez une tabulation puis des espaces) */
-	hex, /* Hexadécimal : ex: 1235	0C 17 2A */
-	txt /* Texte : les valeurs sont converties en chaînes de textes significatives */
-} can_f;
+//typedef enum {
+//	bin, /* Binaire : ce qui circule sur le bus série */
+//	dec, /* Décimal : ex: 1235	12 23 42 (notez une tabulation puis des espaces) */
+//	hex, /* Hexadécimal : ex: 1235	0C 17 2A */
+//	txt /* Texte : les valeurs sont converties en chaînes de textes significatives */
+//} can_f;
 
 
 /****************************/
@@ -112,7 +162,7 @@ typedef enum {
  * n'est pas relancé.
  * @param fd File descriptor à écouter.
  * @param format Format des données reçu */
-int CAN_listen_on(int fd, can_f format);
+//int CAN_listen_on(int fd, can_f format);
 
 /** Enregistrer une fonction de callback.
  * @param mask Masque appliqué à l'identifiant
@@ -120,15 +170,19 @@ int CAN_listen_on(int fd, can_f format);
  * @return	-1 en cas d'échec de realloc (errno peut être consulter)
  *		ou	l'indice positif de la fonction de callback (utile au désenregistrement)
  */
-int CAN_add_callback(int mask, int filter, void (*event)(can_t));
+//int CAN_add_callback(int mask, int filter, void (*event)(can_t));
 
 /** Supprimmer une fonction de callback */
-int CAN_rm_callback(int id);
+//int CAN_rm_callback(int id);
 
 /** Enregistrer une fonction de callback sur erreur. */
-int CAN_on_error(void (*fct)(int));
+//int CAN_on_error(void (*fct)(int));
 
 /** Envoyé dans un descripteur un packet au format spécifier. */
-int CAN_write(int fd, can_t const * packet, int format);
+//int CAN_write(int fd, can_t const * packet, int format);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif

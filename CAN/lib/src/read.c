@@ -14,6 +14,7 @@ static void event(can_t packet);
 
 #define FSIZEINC 8
 
+struct {
 void (**eventv)(can_t);
 int * mask;
 int * filter;
@@ -21,12 +22,21 @@ int eventc;
 int listenfd;
 pthread_t thr;
 int type;
+}
 
 int CAN_add_callback(int m, int f, void (*event)(can_t))
 {
 	static int fsize = 0; /* Taille du tableau de fonctions eventv */
+	int i, j;
+	
+	i = 0;
 
-	if (eventc == fsize) { /* Le tableau est déjà plein */
+	/* Recherche d'un emplacement libre dans le tableau */
+	for (i = 0 ; i < fsize ; i++) {
+		if (eventv[i] == NULL)
+			break;
+	}
+	if (i == fsize) { /* Le tableau est déjà plein, on le rallonge */
 		if ((eventv = realloc(eventv, (fsize + FSIZEINC) * sizeof(void (*)(can_t)))) == NULL) {
 			return -1;
 		}
@@ -37,14 +47,21 @@ int CAN_add_callback(int m, int f, void (*event)(can_t))
 			return -1;
 		}
 		fsize += FSIZEINC;
+		for (j = fsize - FSIZEINC ; j < fsize ; j++) {
+			eventv[i] = NULL;
+			mask[i] = 0;
+			filter[i] = 0;
+		}
 	}
 
-	eventv[eventc++] = event;
-	mask[eventc] = m;
-	filter[eventc] = f;
+	eventv[i++] = event;
+	mask[i] = m;
+	filter[i] = f;
 
 	return eventc - 1;
 }
+
+int CAN_rm_callback
 
 int CAN_listen_on(int fd, can_f f)
 {
@@ -255,8 +272,8 @@ static void * hex_listener (void * arg)
 
 static void event(can_t packet)
 {
-	for (int i = 0 ; i < eventc ; i++) {
-		if ((packet.id & mask[i]) == filter[i])
+	for (int i = 0 ; i < fsize ; i++) {
+		if (eventv[i] != NULL && (packet.id & mask[i]) == filter[i])
 			eventv[i](packet);
 	}
 }
