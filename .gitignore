@@ -1,4 +1,5 @@
 *.o
+*.so
 *.bak
 *.log
 *.pid

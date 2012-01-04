@@ -20,10 +20,9 @@ int * filter;
 int eventc;
 int listenfd;
 pthread_t thr;
-int run;
 int type;
 
-int CAN_on_event(int m, int f, void (*event)(can_t))
+int CAN_add_callback(int m, int f, void (*event)(can_t))
 {
 	static int fsize = 0; /* Taille du tableau de fonctions eventv */
 
@@ -44,7 +43,7 @@ int CAN_on_event(int m, int f, void (*event)(can_t))
 	mask[eventc] = m;
 	filter[eventc] = f;
 
-	return 0;
+	return eventc - 1;
 }
 
 int CAN_listen_on(int fd, can_f f)
@@ -52,18 +51,17 @@ int CAN_listen_on(int fd, can_f f)
 	static int state = 0;
 	static can_f format = -1;
 
-	if (fd < 0) {
-		run = 0;
+	if (state != 0) {
+		pthread_cancel(thr);
 		state = 0;
+	}
+
+	if (fd < 0) {
 		return 0;
 	}
 
 	listenfd = fd;
 	
-	if (state != 0 && format != f) {
-		pthread_cancel(thr);
-		state = 0;
-	}
 	if (state == 0) {
 		format = f;
 		switch (format) {
@@ -94,8 +92,7 @@ static void * bin_listener (void * arg)
 	uint8_t c;
 	int state = 1;
 
-	run = 1;
-    while (run) {
+    while (1) {
         if (read(listenfd, &c, 1) < 0) {
 			return NULL;
         }
@@ -129,40 +126,6 @@ static void * bin_listener (void * arg)
 	return NULL;
 }
 
-//static void * dec_listener (void * arg)
-//{
-//	can_t packet;
-//	uint8_t c;
-//	int state = 0;
-//	int n = 0;
-//
-//	run = 1;
-//	while (run) {
-//		if (read(listenfd, &c, 1) < 0) {
-//			return NULL;
-//		}
-//		if (c == '\t' && state == 0) {
-//			packet.id = n;
-//			n = 0;
-//			state++;
-//		} else if (c == ' ' && state > 0 && state < 9) {
-//			CAN_set(&packet, state++, n);
-//			n = 0;
-//		} else if (c == '\n') {
-//			if (state > 0) {
-//				CAN_set(&packet, state, n);
-//				packet.length = state;
-//				event(packet);
-//			}
-//			n = 0;
-//			state = 0;
-//		} else if (c >= '0' && c <= '9') {
-//			n = n*10 + (c - '0');
-//		}
-//	}
-//	return NULL;
-//}
-
 static void * dec_listener (void * arg)
 {
 	can_t packet;
@@ -170,8 +133,7 @@ static void * dec_listener (void * arg)
 	int state = 0;
 	int n = 0;
 
-	run = 1;
-	while (run) {
+	while (1) {
 		if (read(listenfd, &c, 1) < 0) {
 			return NULL;
 		}
@@ -235,8 +197,7 @@ static void * hex_listener (void * arg)
 	int n = 0;
 	int t = 0;
 
-	run = 1;
-	while (run) {
+	while (1) {
 		if (read(listenfd, &c, 1) < 0) {
 			return NULL;
 		}

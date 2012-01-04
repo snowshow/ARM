@@ -98,13 +98,18 @@ int main(int argc, char * argv[])
 		}
 	}
 
-	if (CAN_on_event(0, 0, listener) < 0) {
+	if (CAN_on_exit(exit) < 0){
+		perror("CAN_on_exit");
+		exit(1);
+	}
+
+	if (CAN_add_callback(0, 0, listener) < 0) {
 		perror("CAN_on_event");
-		return 1;
+		exit(1);
 	}
 	if (CAN_listen_on(STDIN_FILENO, input_format) < 0) {
 		perror("CAN_listen_on");
-		return 1;
+		exit(1);
 	}
 
 	pause();
@@ -114,5 +119,8 @@ int main(int argc, char * argv[])
 
 void listener(can_t packet)
 {
-	CAN_write(1, &packet, output_format);
+	if (CAN_write(1, &packet, output_format) < 0) {
+		perror("CAN_write");
+		exit(1);
+	}
 }
