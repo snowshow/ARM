@@ -21,6 +21,8 @@
 #define DEFAULT_PORT2 "3522"
 #define DEFAULT_FORMAT2 "dec"
 
+#define CONVERTER "canconvert"
+
 void show_help(char * cmd);
 int parse_subopt(char * optarg, char ** host, char ** port, char ** format);
 int open_connection(char * host, char * port);
@@ -193,8 +195,8 @@ int main(int argc, char * argv[])
 		case 0:
 			dup2(sock1, STDIN_FILENO);
 			dup2(sock2, STDOUT_FILENO);
-			execlp("converter", "converter", "-i", format1, "-o", format2, NULL);
-			perror("eveclp(converter)");
+			execlp(CONVERTER, "converter", "-i", format1, "-o", format2, NULL);
+			perror("eveclp");
 			exit(1);
 	}
 
@@ -206,7 +208,7 @@ int main(int argc, char * argv[])
 		case 0:
 			dup2(sock2, STDIN_FILENO);
 			dup2(sock1, STDOUT_FILENO);
-			execlp("converter", "converter", "-i", format2, "-o", format1, NULL);
+			execlp(CONVERTER, "converter", "-i", format2, "-o", format1, NULL);
 			perror("eveclp(converter)");
 			exit(1);
 	}

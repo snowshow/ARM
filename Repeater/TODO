@@ -1,2 +1,3 @@
 Vérouiller le fichier de log pour pas que deux fils écrivent en même temps
 dedans sous peine d'avoir des anagrammes …
+Vider un client en entier sous peine de risquer de couper un packet !
