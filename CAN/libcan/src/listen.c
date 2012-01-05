@@ -33,7 +33,7 @@
 typedef struct can_t can_t;
 
 void dispatch(can_ctx * ctx, can_t packet);
-void * listener(void * arg);
+void * listen(void * arg);
 void * bin_listener(void * arg);
 void * dec_listener(void * arg);
 void * hex_listener(void * arg);
@@ -84,10 +84,10 @@ int can_listen_on(can_ctx * ctx, int fd, enum can_f format)
 		ctx->status = 0;
 		ctx->fd = 0;
 	}
-	if (fd != 0) {
+	if (fd >= 0) {
 		ctx->fd = fd;
 		ctx->format = format;
-		if (pthread_create(&(ctx->pth), NULL, listener, (void *) ctx) < 0)
+		if ((errno = pthread_create(&(ctx->pth), NULL, listen, (void *) ctx)) < 0)
 			return -1;
 	}
 	return 0;
@@ -108,21 +108,21 @@ void dispatch(can_ctx * ctx, can_t packet)
 	}
 }
 
-void * listener(void * arg)
+void * listen(void * arg)
 {
 	((can_ctx *) arg)->status = 1;
 	switch(((can_ctx *) arg)->format) {
 		case bin:
-			bin_listener(NULL);
+			bin_listener(arg);
 			break;
 		case dec:
-			dec_listener(NULL);
+			dec_listener(arg);
 			break;
 		case hex:
-			hex_listener(NULL);
+			hex_listener(arg);
 			break;
 		case txt:
-			txt_listener(NULL);
+			txt_listener(arg);
 			break;
 	}
 	((can_ctx *) arg)->status = 0;
@@ -169,6 +169,7 @@ void * bin_listener (void * arg)
 		}
 	}
 	
+	fprintf(stderr, "listener end\n");
 	return NULL;
 }
 

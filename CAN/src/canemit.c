@@ -43,7 +43,7 @@ int main (int argc, char* argv[])
 			packet.id = rand() % 2048;
 			packet.length = rand() % 9;
 			for (int i = 0 ; i < packet.length ; i++) {
-				can_packet_fill(&packet, i, rand() % 256);
+				can_byte_set(&packet, i, rand() % 256);
 			}
 			can_packet_write(STDOUT_FILENO, bin, &packet);
 			usleep(delay);

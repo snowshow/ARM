@@ -7,16 +7,19 @@ LD = gcc
 MAKE = make
 
 CFLAGS = -std=gnu99 -Iinclude
-LDFLAGS = -lcan -Llibcan -lpthread
+LDFLAGS = -Llibcan -lcan -lpthread
 DEBUG = -g
 WARNING = -Wall -pedantic
 OPTIMIZE = 
 #-O3
 
-all: sharedlib $(EXEC)
+all: sharedlib bindir $(EXEC)
 
 sharedlib:
 	@make -C libcan
+
+bindir:
+	@if [ ! -d bin ]; then mkdir bin; fi
 
 bin/%: src/%.c
 	$(LD) $(DEBUG) $(WARNING) $(OPTIMIZE) $(CFLAGS) $(LDFLAGS) -o $@ $^
@@ -32,7 +35,7 @@ librebuild: mrproper
 	@make -C libcan mrproper
 	@make all
 
-install-lib: sharedlib
+install-lib:
 	@make -C libcan install
 
 install:
