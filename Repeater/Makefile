@@ -6,17 +6,22 @@ LD = gcc
 CFLAGS = -std=gnu99 -Iinclude
 LDFLAGS = -lrt
 DEBUG = 
-#-g
 WARNING = -Wall -pedantic
 OPTIMIZE = -O3
 
 SRC = $(wildcard src/*.c)
 OBJ = $(subst src, obj, $(SRC:.c=.o))
 
-all: $(EXEC)
+all: bin obj $(EXEC)
 
 $(EXEC): $(OBJ)
 	$(LD) $(DEBUG) $(WARNING) $(LDFLAGS) -o $@ $^
+
+obj:
+	@mkdir obj
+
+bin:
+	@mkdir bin
 
 obj/%.o: src/%.c
 	$(CC) $(CFLAGS) $(OPTIMIZE) $(DEBUG) $(WARNING) -o $@ -c $^
