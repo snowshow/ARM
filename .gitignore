@@ -6,5 +6,6 @@
 *.swp
 *.bin
 *.raw
+.nfs*
 CAN/bin/*
 Repeater/repeater

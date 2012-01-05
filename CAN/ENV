@@ -1,2 +1,2 @@
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/libcan
 export PATH=$PATH:$PWD/bin

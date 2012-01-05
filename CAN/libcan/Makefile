@@ -7,7 +7,8 @@ LIBDIR = .
 CC = gcc
 LD = gcc
 
-CFLAGS = -std=gnu99 -Iinclude -fPIC -fvisibility=hidden
+CFLAGS = -std=gnu99 -Iinclude -fPIC 
+#-fvisibility=hidden
 LDFLAGS = -shared
 DEBUG = -g
 WARNING = -Wall -pedantic

@@ -26,11 +26,9 @@
 #include "libcan.h"
 #include "libcan-private.h"
 
-typedef struct can_ctx can_ctx;
-
 /** Create can context library.
  * This function return -1 if malloc fail and 0 on success. */
-int can_new(struct can_ctx ** ctx)
+int can_init(struct can_ctx ** ctx)
 {
 	can_ctx * c = NULL;
 	if ((c = malloc(sizeof(can_ctx))) == NULL) {

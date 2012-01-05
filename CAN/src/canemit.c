@@ -6,10 +6,12 @@
 #include <sys/time.h>
 #include <time.h>
 
-#include "can.h"
+#include "libcan.h"
 
 #define DELAY 1000000
 #define COUNT -1
+
+typedef struct can_t can_t;
 
 int getargs(int argc, char * argv[], int * delay, int * count);
 
@@ -41,9 +43,9 @@ int main (int argc, char* argv[])
 			packet.id = rand() % 2048;
 			packet.length = rand() % 9;
 			for (int i = 0 ; i < packet.length ; i++) {
-				CAN_set(&packet, i, rand() % 256);
+				can_packet_fill(&packet, i, rand() % 256);
 			}
-			CAN_write(STDOUT_FILENO, &packet, bin);
+			can_packet_write(STDOUT_FILENO, bin, &packet);
 			usleep(delay);
 		}
 
@@ -58,13 +60,13 @@ int main (int argc, char* argv[])
 		int b;
 		for (int i = 0 ; i < packet.length ; i++) {
 			sscanf(argv[pos++], "%d", &b);
-			CAN_set(&packet, i, (uint8_t) b);
+			can_packet_fill(&packet, i, (uint8_t) b);
 		}
 
 		while (count) {
 			if (count > 0)
 				count--;
-			CAN_write(STDOUT_FILENO, &packet, bin);
+			can_packet_write(STDOUT_FILENO, bin, &packet);
 			usleep(delay);
 		}
 

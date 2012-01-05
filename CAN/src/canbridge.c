@@ -188,6 +188,8 @@ int main(int argc, char * argv[])
 		setsid();
 	}
 
+	signal(SIGCHLD, exit);
+
 	switch ((pid1 = fork())) {
 		case -1:
 			perror("fork");

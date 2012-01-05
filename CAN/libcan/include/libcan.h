@@ -35,9 +35,9 @@ extern "C" {
  ***********************/
 
 /** Opaque object representing the library context. */
-struct can_ctx;
+typedef struct can_ctx can_ctx;
 /** Create can context library. */
-int can_new(struct can_ctx ** ctx);
+int can_init(struct can_ctx ** ctx);
 /** Take a reference of the can library context. */
 struct can_ctx * can_ref(struct can_ctx * ctx);
 /** Drop a reference of the can library context. If the refcount reaches zero,
@@ -85,6 +85,22 @@ void can_byte_set(struct can_t * packet, int b, uint8_t c);
 
 /** Write a can packet in specified file descriptor in specified format. */
 int can_packet_write(int fd, int format, struct can_t const * packet);
+
+
+/************************
+ * CAN packet reception *
+ ************************/
+
+/** Register a callback function on can packet reception.
+ * The function will be call only for packet where id & mask = filter.
+ * Return index of callback function, necessary for unregister it. */
+int can_register_callback(can_ctx * ctx, \
+		int mask, int filter, void (*cbf)(struct can_t));
+/** Unregister a callback function. */
+int can_unregister_callback(can_ctx * ctx, int id);
+/** Run listener thread on a file descriptor. */
+int can_listen_on(can_ctx * ctx, int fd, enum can_f format);
+
 
 #ifdef __cplusplus
 } /* extern "C" */

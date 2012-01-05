@@ -8,7 +8,7 @@
 #endif
 #include <string.h>
 
-#include "can.h"
+#include "libcan.h"
 
 /* Env variable name */
 #define ENV_INPUT "CONV_INPUT"
@@ -17,6 +17,9 @@
 /* Default value */
 #define DEFAULT_INPUT_FORMAT	bin
 #define DEFAULT_OUTPUT_FORMAT	dec
+
+typedef struct can_t can_t;
+typedef enum can_f can_f;
 
 void listener(can_t packet);
 
@@ -98,17 +101,23 @@ int main(int argc, char * argv[])
 		}
 	}
 
-	if (CAN_on_exit(exit) < 0){
+	/*if (CAN_on_exit(exit) < 0){
 		perror("CAN_on_exit");
+		exit(1);
+	}*/
+
+	can_ctx * ctx;
+	if (can_init(&ctx) < 0) {
+		perror("can_init");
 		exit(1);
 	}
 
-	if (CAN_add_callback(0, 0, listener) < 0) {
-		perror("CAN_on_event");
+	if (can_register_callback(ctx, 0, 0, listener) < 0) {
+		perror("can_register_callback");
 		exit(1);
 	}
-	if (CAN_listen_on(STDIN_FILENO, input_format) < 0) {
-		perror("CAN_listen_on");
+	if (can_listen_on(ctx, STDIN_FILENO, input_format) < 0) {
+		perror("can_listen_on");
 		exit(1);
 	}
 
@@ -119,7 +128,7 @@ int main(int argc, char * argv[])
 
 void listener(can_t packet)
 {
-	if (CAN_write(1, &packet, output_format) < 0) {
+	if (can_packet_write(1, output_format, &packet) < 0) {
 		perror("CAN_write");
 		exit(1);
 	}

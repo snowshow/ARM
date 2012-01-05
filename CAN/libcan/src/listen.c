@@ -30,7 +30,6 @@
 #include "libcan.h"
 #include "libcan-private.h"
 
-typedef struct can_ctx can_ctx;
 typedef struct can_t can_t;
 
 void dispatch(can_ctx * ctx, can_t packet);
@@ -88,9 +87,10 @@ int can_listen_on(can_ctx * ctx, int fd, enum can_f format)
 	if (fd != 0) {
 		ctx->fd = fd;
 		ctx->format = format;
-		pthread_create(&(ctx->pth), NULL, listener, (void *) ctx);
+		if (pthread_create(&(ctx->pth), NULL, listener, (void *) ctx) < 0)
+			return -1;
 	}
-	return -1;
+	return 0;
 }
 
 void dispatch(can_ctx * ctx, can_t packet)
@@ -237,6 +237,70 @@ void * dec_listener (void * arg)
 }
 
 void * hex_listener (void * arg)
+{
+	can_ctx * ctx = (can_ctx *) arg;
+	can_t packet;
+	char c;
+	int state = 0;
+	int n = 0;
+	int t = 0;
+
+	while (1) {
+		if (read(ctx->fd, &c, 1) < 0) {
+			return NULL;
+		}
+		if (c == '\n') {
+			if (state == 0) {
+				if (n >= 0 && n < 2048) {
+					packet.id = n;
+					packet.length = 0;
+					dispatch(ctx, packet);
+				}
+			} else if (state < 9) {
+				if (n >= 0 && n < 256) {
+					can_byte_set(&packet, state-1, n);
+					packet.length = state;
+					dispatch(ctx, packet);
+				}
+			}
+			state = 0;
+			n = 0;
+		} else if (state == 0) {
+			if (c == '\t') {
+				if (n >= 0 && n < 2048) {
+					packet.id = n;
+					n = 0;
+					state = 1;
+				} else {
+					state = 9;
+				}
+			} else if (c >= '0' && c <= '9') {
+				n *= 10;
+				n += c - '0';
+			} else {
+				state = 9;
+			}
+		} else if (state > 0 && state < 9) {
+			if (c == ' ' && state != 8) {
+				if (n >= 0 && n < 256) {
+					can_byte_set(&packet, state-1, n);
+					state++;
+					n = 0;
+				} else {
+					state = 9;
+				}
+			} else if ((t = htoi(c)) < 0) {
+				state = 9;
+			} else {
+				n *= 16;
+				n += t;
+			}
+		}
+	}
+	return NULL;
+}
+
+void * txt_listener (void * arg)
 {
 	can_ctx * ctx = (can_ctx *) arg;
 	can_t packet;
